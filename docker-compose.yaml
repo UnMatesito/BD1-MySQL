@@ -1,0 +1,42 @@
+version: '3.9'
+
+services:
+  generator:
+    image: python:3.11-slim
+    container_name: generator
+    working_dir: /app
+    volumes:
+      - ./init:/docker-entrypoint-initdb.d
+      - ./generator.py:/app/generator.py
+    command: sh -c "apt-get update && apt-get install -y default-mysql-client && pip install faker && python generator.py"
+
+  db:
+    image: mysql:8.0
+    container_name: mysql_appointments
+    restart: always
+    depends_on:
+      generator:
+        condition: service_completed_successfully
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: appointments
+    volumes:
+      - ./init:/docker-entrypoint-initdb.d
+      - mysql_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: phpmyadmin
+    restart: always
+    depends_on:
+      - db
+    environment:
+      PMA_HOST: db
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "8080:80"
+
+volumes:
+  mysql_data:
