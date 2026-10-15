@@ -1,9 +1,9 @@
--- Drop tables if they already exist
-DROP TABLE IF EXISTS PrescribedMedication;
-DROP TABLE IF EXISTS MedicalReview;
-DROP TABLE IF EXISTS Appointment;
-DROP TABLE IF EXISTS Patient;
-DROP TABLE IF EXISTS Doctor;
+-- Drop tables if they already exist (hijas primero)
+DROP TABLE IF EXISTS prescribed_medication;
+DROP TABLE IF EXISTS medical_review;
+DROP TABLE IF EXISTS appointment;
+DROP TABLE IF EXISTS patient;
+DROP TABLE IF EXISTS doctor;
 
 -- Table Patient
 CREATE TABLE `patient` (
@@ -14,7 +14,7 @@ CREATE TABLE `patient` (
   `primary_phone` varchar(255) DEFAULT NULL,
   `secondary_phone` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`patient_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Table Doctor
 CREATE TABLE `doctor` (
@@ -22,9 +22,9 @@ CREATE TABLE `doctor` (
   `doctor_name` varchar(255) NOT NULL,
   `doctor_address` varchar(255) DEFAULT NULL,
   `doctor_city` varchar(255) DEFAULT NULL,
-  `doctor_specialty` varchar(255) DEFAULT NULL,
+  `doctor_speciality` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`doctor_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Table Appointment
 CREATE TABLE `appointment` (
@@ -36,7 +36,7 @@ CREATE TABLE `appointment` (
   `payment_card` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`patient_id`, `appointment_date`),
   FOREIGN KEY (`patient_id`) REFERENCES `patient`(`patient_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Table Prescribed Medication
 CREATE TABLE `prescribed_medication` (
@@ -45,7 +45,7 @@ CREATE TABLE `prescribed_medication` (
   `medication_name` varchar(30) NOT NULL,
   PRIMARY KEY (`patient_id`, `appointment_date`, `medication_name`),
   FOREIGN KEY (`patient_id`, `appointment_date`) REFERENCES `appointment`(`patient_id`, `appointment_date`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Table Medical Review
 CREATE TABLE `medical_review` (
@@ -55,4 +55,4 @@ CREATE TABLE `medical_review` (
   PRIMARY KEY (`patient_id`, `appointment_date`, `doctor_id`),
   FOREIGN KEY (`patient_id`, `appointment_date`) REFERENCES `appointment`(`patient_id`, `appointment_date`),
   FOREIGN KEY (`doctor_id`) REFERENCES `doctor`(`doctor_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

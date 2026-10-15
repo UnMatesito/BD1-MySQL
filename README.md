@@ -1,4 +1,4 @@
-# Docker de MySQL para el Bases de Datos 1 - 2025
+# Docker de MySQL para el Bases de Datos 1 - 2026
 
 Este repositorio se creo para ejecutar MySQL + PhpMyAdmin desde docker sin la necesidad de instalar todo localmente.
 

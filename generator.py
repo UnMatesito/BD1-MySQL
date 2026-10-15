@@ -2,6 +2,10 @@ import faker
 import random
 import datetime
 
+# Semillas fijas: todos obtienen los mismos datos
+random.seed(42)
+faker.Faker.seed(42)
+
 # Crear una instancia de Faker con la localización en Argentina
 fake = faker.Faker('es_AR')
 
@@ -16,20 +20,20 @@ doctors = []
 appointments = []
 medical_reviews = []
 prescribed_medications = []
-cities = ["Buenos Aires", "Rosario", "La Plata", "Mar del Plata", "Cordoba", "Mendoza", 
-          "Santa Rosa", "San Juan", "Santa Fe", "Usuahia", "Tigre", "Zarate", "Rio Gallegos", "Salta"]
+
+cities = ["Buenos Aires", "Rosario", "La Plata", "Mar del Plata", "Cordoba", "Mendoza",
+          "Santa Rosa", "San Juan", "Santa Fe", "Ushuaia", "Tigre", "Zarate", "Rio Gallegos", "Salta"]
 
 # Función para generar pacientes
 def generate_patients(n):
     patient_id = 10000000
     for _ in range(n):
-        patient_id = fake.random_int(min=patient_id+1, max=(patient_id+100))  # DNI argentino
-        patient_name = fake.name().replace("'", "''")  # Escapar comillas simples
+        patient_id = fake.random_int(min=patient_id+1, max=(patient_id+100)) # DNI argentino
+        patient_name = fake.name().replace("'", "''") # Escapar comillas simples
         patient_address = fake.address().replace("\n", ", ").replace("'", "''")
         patient_city = random.choice(cities)
         primary_phone = fake.phone_number()
         secondary_phone = fake.phone_number()
-
         patients.append({
             'patient_id': patient_id,
             'patient_name': patient_name,
@@ -37,36 +41,39 @@ def generate_patients(n):
             'patient_city': patient_city,
             'primary_phone': primary_phone,
             'secondary_phone': secondary_phone
-        })
+})
 
 # Función para generar doctores
 def generate_doctors(n):
     doctor_id = 1000
     for _ in range(n):
-        doctor_id = doctor_id + 1  # ID único de doctor
+        doctor_id = doctor_id + 1 # ID único de doctor
         doctor_name = fake.name().replace("'", "''")
         doctor_address = fake.address().replace("\n", ", ").replace("'", "''")
-        doctor_city = random.choice(cities)
+        # Las últimas 2 ciudades quedan sin doctores (para el punto 4b del TP)
+        doctor_city = random.choice(cities[:-2])
         doctor_specialty = random.choice(['Cardiology', 'Pediatrics', 'Dermatology', 'Neurology', 'Gynecology'])
-
         doctors.append({
             'doctor_id': doctor_id,
             'doctor_name': doctor_name,
             'doctor_address': doctor_address,
             'doctor_city': doctor_city,
             'doctor_specialty': doctor_specialty,
-        })
+})
 
 # Función para generar citas médicas
 def generate_appointments(n):
     for i in range(n):
-        patient = random.choice(patients)  # Seleccionar un paciente aleatorio
-        appointment_date = fake.date_time_this_decade().strftime('%Y-%m-%d %H:%M:%S')
-        appointment_duration = random.randint(10, 80)  # Duración en minutos
+        patient = random.choice(patients) # Seleccionar un paciente aleatorio
+        # Rango fijo (en vez de "this_decade") para que las semillas den siempre lo mismo
+        appointment_date = fake.date_time_between(
+            start_date=datetime.datetime(2020, 1, 1),
+            end_date=datetime.datetime(2025, 12, 31)
+        ).strftime('%Y-%m-%d %H:%M:%S')
+        appointment_duration = random.randint(10, 80) # Duración en minutos
         contact_phone = patient['primary_phone'] if random.random() > 0.2 else patient['secondary_phone']
         observations = "Observation number " + str(i)
         payment_card = fake.credit_card_number()
-
         appointments.append({
             'patient_id': patient['patient_id'],
             'appointment_date': appointment_date,
@@ -74,9 +81,9 @@ def generate_appointments(n):
             'contact_phone': contact_phone,
             'observations': observations,
             'payment_card': payment_card
-        })
+})
 
-        # Generar entre 0 y 5 revisiones médicas por cita
+        # Generar entre 0 y 3 revisiones médicas por cita
         num_reviews = random.randint(0, 3)
         reviewing_doctors = random.sample(doctors, num_reviews)
         for reviewing_doctor in reviewing_doctors:
@@ -84,21 +91,25 @@ def generate_appointments(n):
             'patient_id': patient['patient_id'],
             'appointment_date': appointment_date,
             'doctor_id': reviewing_doctor['doctor_id']
-            })
+})
 
-        # Generar entre 0 y 5 medicamentos recetados por cita
+        # Generar entre 0 y 3 medicamentos recetados por cita
         num_medications = random.randint(0, 3)
         prescribed_medication_names = random.sample(['Ibuprofeno', 'Paracetamol', 'Amoxicillin', 'Clonazepam'], num_medications)
-        
         for medication_name in prescribed_medication_names:
             prescribed_medications.append({
             'patient_id': patient['patient_id'],
             'appointment_date': appointment_date,
             'medication_name': medication_name
-            })
+})
 
 # Generar los datos
 generate_patients(num_patients)
+
+# Garantizar el paciente que usa el punto 10 del TP
+if not any(p['patient_id'] == 10004427 for p in patients):
+    min(patients, key=lambda p: abs(p['patient_id'] - 10004427))['patient_id'] = 10004427
+
 generate_doctors(num_doctors)
 generate_appointments(num_appointments)
 
@@ -110,7 +121,7 @@ with open('/docker-entrypoint-initdb.d/02_data.sql', 'w', encoding='utf-8') as s
     sqlfile.write(",\n".join([f"({p['patient_id']}, '{p['patient_name']}', '{p['patient_address']}', '{p['patient_city']}', '{p['primary_phone']}', '{p['secondary_phone'] or 'NULL'}')" for p in patients]))
     sqlfile.write(";\n\n")
 
-    sqlfile.write("INSERT INTO doctor (doctor_id, doctor_name, doctor_address, doctor_city, doctor_specialty) VALUES\n")
+    sqlfile.write("INSERT INTO doctor (doctor_id, doctor_name, doctor_address, doctor_city, doctor_speciality) VALUES\n")
     sqlfile.write(",\n".join([f"({d['doctor_id']}, '{d['doctor_name']}', '{d['doctor_address']}', '{d['doctor_city']}', '{d['doctor_specialty']}')" for d in doctors]))
     sqlfile.write(";\n\n")
 
